@@ -1,42 +1,25 @@
 <template>
   <div class="home-page">
-    <n-card style="margin-bottom: 3rem;">
-      <h3 style="margin-bottom: 2rem;">Загрузите изображение вагона:</h3>
-      <div class="home-page__upload">
-        <n-spin v-if="fetchStatus === 'loading'" size="large" style="width: 100%;" />
-        <n-upload
-            v-else
-            directory-dnd
-            :on-change="sendImage"
-            :show-file-list="false"
-            accept="image/*"
-        >
-          <n-upload-dragger>
-            <div style="margin-bottom: 12px">
-              <n-icon size="48" :depth="3" :component="ArchiveOutline" />
-            </div>
-            <n-text style="font-size: 16px">
-              Кликните или перетащите файл
-            </n-text>
-            <n-p depth="3" style="margin: 8px 0 0 0">
-              Доступный формат файла: .png, .jpg, .jpeg, .svg
-            </n-p>
-          </n-upload-dragger>
-        </n-upload>
 
-      </div>
-    </n-card>
+    <n-tabs type="segment">
+      <n-tab-pane name="video" tab="Видео">
+        <UploadFile />
+      </n-tab-pane>
+      <n-tab-pane name="link" tab="RTSP ссылка">
+        <RTSPLink />
+      </n-tab-pane>
+    </n-tabs>
 
-    <template v-if="results?.length">
-      <n-scrollbar style="max-height: calc(100vh - 550px)">
-        <n-grid :cols="5" x-gap="16" y-gap="16">
-          <n-gi v-for="res in results" :key="res.number">
-            <ResultCard :data="res" />
-          </n-gi>
-        </n-grid>
-      </n-scrollbar>
+    <n-modal v-model:show="videoPath"  preset="card" style="width: fit-content">
+      <n-card >Видео обрабатывается</n-card>
+       <VideoPlayer v-if="videoPath" :path="videoPath" />
+    </n-modal>
 
-    </template>
+
+<!--    <video controls>-->
+<!--      <source src="http://45.9.27.201/api/v1/ml/get_video?id=b8498b24-990b-4e76-afdc-dc371b6430a7" >-->
+<!--    </video>-->
+
 
   </div>
 </template>
@@ -44,31 +27,12 @@
 <script setup lang="ts">
 import {storeToRefs} from "pinia";
 import { ArchiveOutline } from '@vicons/ionicons5'
-import ResultCard from "@/components/ResultCard.vue";
-import {useResultsStore} from "@/stores/results";
-import type {UploadFileInfo} from "naive-ui";
-import {useNotification} from "naive-ui";
+import {useVideoStore} from "@/stores/video";
+import UploadFile from "@/components/UploadFile.vue";
+import VideoPlayer from "@/components/VideoPlayer.vue";
+import RTSPLink from "@/components/RTSPLink.vue";
 
-const {fetchStatus, results} = storeToRefs(useResultsStore())
-const { loadInfo } = useResultsStore()
-const notification = useNotification()
-
-
-const sendImage = async (file: UploadFileInfo) => {
-  const res = await loadInfo(file)
-  if (res?.status === 'error') {
-    notification.error({
-      content: 'Что-то пошло не так',
-      duration: 3000
-    })
-  }
-}
-
-const setDefaultResults = () => {
-  results.value = JSON.parse(localStorage.getItem('results' ) || '[]')
-}
-
-setDefaultResults()
+const {fetchStatus, videoPath} = storeToRefs(useVideoStore())
 
 
 </script>
